@@ -11,10 +11,10 @@ def evaluate_df(y_true_log, y_pred_log, y_true_raw, y_pred_raw):
     return {
         'R2_log': r2_score(y_true_log, y_pred_log),
         'MAE_log': mean_absolute_error(y_true_log, y_pred_log),
-        'RMSE_log': mean_squared_error(y_true_log, y_pred_log, squared=False),
+        'RMSE_log': float(np.sqrt(mean_squared_error(y_true_log, y_pred_log))),
         'R2_raw': r2_score(y_true_raw, y_pred_raw),
         'MAE_raw': mean_absolute_error(y_true_raw, y_pred_raw),
-        'RMSE_raw': mean_squared_error(y_true_raw, y_pred_raw, squared=False),
+        'RMSE_raw': float(np.sqrt(mean_squared_error(y_true_raw, y_pred_raw))),
     }
 
 if __name__ == "__main__":
@@ -45,15 +45,20 @@ if __name__ == "__main__":
     val_idx, test_idx = next(sss2.split(X_log.iloc[temp_idx], y_bins.iloc[temp_idx]))
     val_idx, test_idx = temp_idx[val_idx], temp_idx[test_idx]
 
-    X_train, X_val, X_test = X.iloc[train_idx], X.iloc[val_idx], X.iloc[test_idx]
-    y_train_log, y_val_log, y_test_log = y_log.iloc[train_idx], y_log.iloc[val_idx], y_log.iloc[test_idx]
-    y_train_raw, y_val_raw, y_test_raw = y_raw.iloc[train_idx], y_raw.iloc[val_idx], y_raw.iloc[test_idx]
+   # keep columns names so transformers that depend on feature names won't warn
+    X_train_pre = imputer.transform(scaler.transform(np.log1p(X_train)))
+    X_train_pre = pd.DataFrame(X_train_pre, columns=X_train.columns, index=X_train.index)
+    X_train_sel = selector.transform(X_train_pre)
+
+    X_val_pre = imputer.transform(scaler.transform(np.log1p(X_val)))
+    X_val_pre = pd.DataFrame(X_val_pre, columns=X_val.columns, index=X_val.index)
+    X_val_sel = selector.transform(X_val_pre)
+
+    X_test_pre = imputer.transform(scaler.transform(np.log1p(X_test)))
+    X_test_pre = pd.DataFrame(X_test_pre, columns=X_test.columns, index=X_test.index)
+    X_test_sel = selector.transform(X_test_pre)
 
     scaler, imputer, selector = fit_preprocessing(X_train, y_train_log, args.out)
-
-    X_train_sel = selector.transform(imputer.transform(scaler.transform(np.log1p(X_train))))
-    X_val_sel = selector.transform(imputer.transform(scaler.transform(np.log1p(X_val))))
-    X_test_sel = selector.transform(imputer.transform(scaler.transform(np.log1p(X_test))))
 
     # use the best params you found previously (from Codes.py)
     best_params = {'n_estimators': 776, 'learning_rate': 0.010590433420511285,
