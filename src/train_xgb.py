@@ -45,6 +45,8 @@ if __name__ == "__main__":
     val_idx, test_idx = next(sss2.split(X_log.iloc[temp_idx], y_bins.iloc[temp_idx]))
     val_idx, test_idx = temp_idx[val_idx], temp_idx[test_idx]
 
+    scaler, imputer, selector = fit_preprocessing(X_train, y_train_log, args.out)
+
    # keep columns names so transformers that depend on feature names won't warn
     X_train_pre = imputer.transform(scaler.transform(np.log1p(X_train)))
     X_train_pre = pd.DataFrame(X_train_pre, columns=X_train.columns, index=X_train.index)
@@ -58,7 +60,7 @@ if __name__ == "__main__":
     X_test_pre = pd.DataFrame(X_test_pre, columns=X_test.columns, index=X_test.index)
     X_test_sel = selector.transform(X_test_pre)
 
-    scaler, imputer, selector = fit_preprocessing(X_train, y_train_log, args.out)
+    
 
     # use the best params you found previously (from Codes.py)
     best_params = {'n_estimators': 776, 'learning_rate': 0.010590433420511285,
